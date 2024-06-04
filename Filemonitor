@@ -2,6 +2,7 @@
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FileMonitor {
@@ -45,14 +46,17 @@ public class FileMonitor {
     }
 
     private static List<String> getNewLines(Path filePath, long lastSize) {
+        List<String> newLines = new ArrayList<>();
         try {
             List<String> lines = Files.readAllLines(filePath);
-            if (lines.size() > lastSize) {
-                return lines.subList((int) lastSize, lines.size());
+            int start = (int) lastSize;
+            int end = lines.size();
+            if (start < end) {
+                newLines = lines.subList(start, end);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return newLines;
     }
 }
