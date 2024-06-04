@@ -1,3 +1,4 @@
+
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
 import java.io.IOException;
@@ -22,8 +23,9 @@ public class FileMonitor {
             
             if (currentSize > lastSize) {
                 System.out.println("Checking for new line in " + filename);
-                if (checkForNewLine(filePath)) {
-                    System.out.println("New line added to " + filename);
+                String newLine = getNewLine(filePath, lastSize);
+                if (newLine != null) {
+                    System.out.println("New line added to " + filename + ": " + newLine);
                     lastSize = currentSize;
                 }
             }
@@ -39,13 +41,15 @@ public class FileMonitor {
         }
     }
 
-    private static boolean checkForNewLine(Path filePath) {
+    private static String getNewLine(Path filePath, long lastSize) {
         try {
             List<String> lines = Files.readAllLines(filePath);
-            return lines.size() > 0;
+            if (lines.size() > 0 && lastSize < Files.size(filePath)) {
+                return lines.get(lines.size() - 1);
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
         }
+        return null;
     }
 }
