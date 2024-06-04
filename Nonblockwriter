@@ -1,0 +1,52 @@
+
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.concurrent.Future;
+
+public class FileUpdater {
+    public static void main(String[] args) {
+        String filename = "output.txt";
+        Path filePath = Paths.get(System.getProperty("user.dir"), filename);
+
+        System.out.println("Writing to " + filename + " every 5 seconds...");
+
+        while (true) {
+            try {
+                Thread.sleep(5000); // Sleep for 5 seconds
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            String randomLine = generateRandomLine();
+            writeToFile(filePath, randomLine);
+        }
+    }
+
+    private static String generateRandomLine() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            char randomChar = (char) ('a' + (int) (Math.random() * 26)); // Random lowercase letter
+            stringBuilder.append(randomChar);
+        }
+        return stringBuilder.toString();
+    }
+
+    private static void writeToFile(Path filePath, String content) {
+        try {
+            AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(filePath, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+            ByteBuffer buffer = ByteBuffer.wrap((content + "\n").getBytes(StandardCharsets.UTF_8));
+            Future<Integer> operation = fileChannel.write(buffer, fileChannel.size());
+
+            while (!operation.isDone()) {
+                // Wait for the write operation to complete
+            }
+
+            buffer.clear(); // Clear the buffer for reuse
+            fileChannel.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
