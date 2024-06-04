@@ -1,9 +1,7 @@
 
-import java.nio.file.*;
-import java.util.concurrent.TimeUnit;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.RandomAccessFile;
+import java.nio.file.*;
 
 public class FileMonitor {
     public static void main(String[] args) {
@@ -15,7 +13,7 @@ public class FileMonitor {
 
         while (true) {
             try {
-                TimeUnit.SECONDS.sleep(5); // Poll every 5 seconds
+                Thread.sleep(5000); // Poll every 5 seconds
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -24,12 +22,9 @@ public class FileMonitor {
 
             if (currentSize > lastSize) {
                 System.out.println("Checking for new lines in " + filename);
-                List<String> newLines = getNewLines(filePath, lastSize);
+                String newLines = getNewLines(filePath, lastSize);
                 if (newLines != null && !newLines.isEmpty()) {
-                    System.out.println("New lines added to " + filename + ":");
-                    for (String line : newLines) {
-                        System.out.println(line);
-                    }
+                    System.out.println("New lines added to " + filename + ":\n" + newLines);
                     lastSize = currentSize;
                 }
             }
@@ -45,18 +40,18 @@ public class FileMonitor {
         }
     }
 
-    private static List<String> getNewLines(Path filePath, long lastSize) {
-        List<String> newLines = new ArrayList<>();
-        try {
-            List<String> lines = Files.readAllLines(filePath);
-            int start = (int) lastSize;
-            int end = lines.size();
-            if (start < end) {
-                newLines = lines.subList(start, end);
+    private static String getNewLines(Path filePath, long lastSize) {
+        try (RandomAccessFile file = new RandomAccessFile(filePath.toFile(), "r")) {
+            file.seek(lastSize);
+            StringBuilder newLines = new StringBuilder();
+            String line;
+            while ((line = file.readLine()) != null) {
+                newLines.append(line).append("\n");
             }
+            return newLines.toString();
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
-        return newLines;
     }
 }
