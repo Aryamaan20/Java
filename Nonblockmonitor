@@ -1,0 +1,73 @@
+
+import java.nio.file.*;
+
+public class FileMonitor {
+    public static void main(String[] args) throws Exception {
+        String filename = "output.txt";
+        Path filePath = Paths.get(System.getProperty("user.dir"), filename);
+        long lastSize = getFileSize(filePath);
+
+        System.out.println("Monitoring " + filename + " for changes...");
+
+        WatchService watchService = FileSystems.getDefault().newWatchService();
+        filePath.getParent().register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+
+        while (true) {
+            WatchKey key;
+            try {
+                key = watchService.take();
+            } catch (InterruptedException e) {
+                return; // Interrupted, exit loop
+            }
+
+            for (WatchEvent<?> event : key.pollEvents()) {
+                WatchEvent.Kind<?> kind = event.kind();
+                if (kind == StandardWatchEventKinds.OVERFLOW) {
+                    continue;
+                }
+                @SuppressWarnings("unchecked")
+                WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                Path filenamePath = ev.context();
+                if (filenamePath.toString().equals(filename)) {
+                    long currentSize = getFileSize(filePath);
+                    if (currentSize > lastSize) {
+                        System.out.println("Checking for new lines in " + filename);
+                        String newLines = getNewLines(filePath, lastSize);
+                        if (newLines != null && !newLines.isEmpty()) {
+                            System.out.println("New lines added to " + filename + ":\n" + newLines);
+                            lastSize = currentSize;
+                        }
+                    }
+                }
+            }
+            boolean valid = key.reset();
+            if (!valid) {
+                break; // Exit loop if watch key is no longer valid
+            }
+        }
+    }
+
+    private static long getFileSize(Path filePath) {
+        try {
+            return Files.size(filePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    private static String getNewLines(Path filePath, long lastSize) {
+        try (RandomAccessFile file = new RandomAccessFile(filePath.toFile(), "r")) {
+            file.seek(lastSize);
+            StringBuilder newLines = new StringBuilder();
+            String line;
+            while ((line = file.readLine()) != null) {
+                newLines.append(line).append("\n");
+            }
+            return newLines.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}
