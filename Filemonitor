@@ -1,12 +1,13 @@
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
+import java.io.IOException;
+import java.util.List;
 
 public class FileMonitor {
     public static void main(String[] args) {
         String filename = "output.txt";
         Path filePath = Paths.get(System.getProperty("user.dir"), filename);
-        
-        long lastModified = getFileLastModifiedTime(filePath);
+        long lastSize = getFileSize(filePath);
 
         System.out.println("Monitoring " + filename + " for changes...");
 
@@ -17,21 +18,34 @@ public class FileMonitor {
                 e.printStackTrace();
             }
             
-            long currentModified = getFileLastModifiedTime(filePath);
+            long currentSize = getFileSize(filePath);
             
-            if (currentModified > lastModified) {
-                System.out.println("New line added to " + filename);
-                lastModified = currentModified;
+            if (currentSize > lastSize) {
+                System.out.println("Checking for new line in " + filename);
+                if (checkForNewLine(filePath)) {
+                    System.out.println("New line added to " + filename);
+                    lastSize = currentSize;
+                }
             }
         }
     }
 
-    private static long getFileLastModifiedTime(Path filePath) {
+    private static long getFileSize(Path filePath) {
         try {
-            return Files.getLastModifiedTime(filePath).toMillis();
-        } catch (Exception e) {
+            return Files.size(filePath);
+        } catch (IOException e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+
+    private static boolean checkForNewLine(Path filePath) {
+        try {
+            List<String> lines = Files.readAllLines(filePath);
+            return lines.size() > 0;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }
