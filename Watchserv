@@ -1,0 +1,37 @@
+import java.io.IOException;
+import java.nio.file.*;
+
+public class FileMonitor {
+    public static void main(String[] args) {
+        String filename = "output.txt";
+        Path filePath = Paths.get(System.getProperty("user.dir"), filename);
+
+        System.out.println("Monitoring " + filename + " for changes...");
+
+        try {
+            WatchService watchService = FileSystems.getDefault().newWatchService();
+            filePath.getParent().register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+
+            while (true) {
+                WatchKey key = watchService.take();
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    WatchEvent.Kind<?> kind = event.kind();
+                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                        System.out.println("File modified: " + event.context());
+                        String newLines = getNewLines(filePath);
+                        if (newLines != null && !newLines.isEmpty()) {
+                            System.out.println("New lines added to " + filename + ":\n" + newLines);
+                        }
+                    }
+                }
+                key.reset();
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String getNewLines(Path filePath) {
+        // Implement getNewLines method as before
+    }
+}
