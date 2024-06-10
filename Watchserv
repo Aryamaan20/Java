@@ -1,3 +1,6 @@
+
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 
@@ -32,6 +35,17 @@ public class FileMonitor {
     }
 
     private static String getNewLines(Path filePath) {
-        // Implement getNewLines method as before
+        StringBuilder newLines = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath.toFile()))) {
+            String line;
+            long lastSize = Files.size(filePath) - 1;
+            reader.skip(lastSize);
+            while ((line = reader.readLine()) != null) {
+                newLines.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return newLines.toString();
     }
 }
