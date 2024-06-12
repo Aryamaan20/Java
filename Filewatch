@@ -10,7 +10,7 @@ public class FileWatcherExample {
 
         // Create a WatchService
         WatchService watchService = FileSystems.getDefault().newWatchService();
-        
+
         // Register the directory containing the file
         Path parentDir = filePath.getParent();
         if (parentDir != null) {
@@ -20,21 +20,12 @@ public class FileWatcherExample {
             return;
         }
 
-        // Get the initial file size
-        long lastSize = Files.size(filePath);
+        // Get the initial content of the file
+        StringBuilder previousContent = readContentFromFile(filePath);
 
         // Start watching for events
         System.out.println("Watching for file changes...");
         while (true) {
-            // Check for changes in file size
-            long currentSize = Files.size(filePath);
-            if (currentSize != lastSize) {
-                System.out.println("File modified: " + filePath);
-                // Read and print the new lines added to the file
-                Files.lines(filePath).forEach(System.out::println);
-                lastSize = currentSize;
-            }
-
             // Wait for file system events
             WatchKey key;
             try {
@@ -43,10 +34,57 @@ public class FileWatcherExample {
                 return;
             }
 
+            // Check for events
+            for (WatchEvent<?> event : key.pollEvents()) {
+                if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    @SuppressWarnings("unchecked")
+                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                    Path changedFile = ev.context();
+                    if (changedFile != null && changedFile.equals(filePath.getFileName())) {
+                        System.out.println("File modified: " + filePath);
+                        // Read and print the new lines added to the file
+                        StringBuilder currentContent = readContentFromFile(filePath);
+                        printNewContent(previousContent, currentContent);
+                        previousContent = currentContent;
+                    }
+                }
+            }
+
             // Reset the key
             boolean valid = key.reset();
             if (!valid) {
                 break;
+            }
+        }
+    }
+
+    private static StringBuilder readContentFromFile(Path filePath) {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return content;
+    }
+
+    private static void printNewContent(StringBuilder previousContent, StringBuilder currentContent) {
+        String[] previousLines = previousContent.toString().split("\n");
+        String[] currentLines = currentContent.toString().split("\n");
+
+        for (String line : currentLines) {
+            boolean isNewLine = true;
+            for (String prevLine : previousLines) {
+                if (line.equals(prevLine)) {
+                    isNewLine = false;
+                    break;
+                }
+            }
+            if (isNewLine) {
+                System.out.println(line);
             }
         }
     }
