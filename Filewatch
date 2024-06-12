@@ -1,0 +1,45 @@
+
+
+import java.nio.file.*;
+
+public class FileWatcherExample {
+
+    public static void main(String[] args) throws Exception {
+        // Define the file to watch
+        Path filePath = Paths.get("file_to_watch.txt");
+        
+        // Create a WatchService and register the file's parent directory
+        WatchService watchService = FileSystems.getDefault().newWatchService();
+        filePath.getParent().register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+        
+        // Start watching for events
+        System.out.println("Watching for file changes...");
+        while (true) {
+            WatchKey key;
+            try {
+                key = watchService.take();
+            } catch (InterruptedException ex) {
+                return;
+            }
+            
+            // Check for events
+            for (WatchEvent<?> event : key.pollEvents()) {
+                WatchEvent.Kind<?> kind = event.kind();
+                if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    Path changedFile = (Path) event.context();
+                    if (changedFile.equals(filePath.getFileName())) {
+                        System.out.println("File modified: " + filePath);
+                        // Read the new lines added to the file
+                        Files.lines(filePath).forEach(System.out::println);
+                    }
+                }
+            }
+            
+            // Reset the key
+            boolean valid = key.reset();
+            if (!valid) {
+                break;
+            }
+        }
+    }
+}
