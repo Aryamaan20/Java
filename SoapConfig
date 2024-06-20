@@ -1,0 +1,17 @@
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.ws.client.core.WebServiceTemplate;
+import org.springframework.ws.soap.client.core.SoapActionCallback;
+
+@Configuration
+public class SoapClientConfig {
+
+    @Bean
+    public WebServiceTemplate webServiceTemplate() {
+        WebServiceTemplate template = new WebServiceTemplate();
+        // Configure the default URI of the SOAP service
+        template.setDefaultUri("http://your-soap-api-url");
+        return template;
+    }
+}
