@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -31,18 +32,13 @@ public class CopyRandomLineFromFile {
         }
 
         // Shuffle the lines to achieve randomness
-        Random rand = new Random();
-        for (int i = 0; i < lines.size(); i++) {
-            int randomIndex = rand.nextInt(lines.size());
-            String randomLine = lines.get(randomIndex);
-
-            // Write the random line to the destination file
-            try (FileWriter writer = new FileWriter(destinationFileName, true)) {
-                writer.write(randomLine + "\n");
+        Collections.shuffle(lines);
+        
+        // Write each line to the destination file
+        try (FileWriter writer = new FileWriter(destinationFileName)) {
+            for (String line : lines) {
+                writer.write(line + "\n");
             }
-
-            // Remove the selected line to prevent duplicates
-            lines.remove(randomIndex);
         }
     }
 }
