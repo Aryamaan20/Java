@@ -1,44 +1,46 @@
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class CopyRandomLineFromFile {
+public class RandomLineCopy {
 
-    public static void main(String[] args) {
-        String sourceFileName = "path/to/source/file.txt";       // Path to your source file
-        String destinationFileName = "path/to/destination/file.txt"; // Path to your destination file
-
-        try {
-            copyRandomLineByLine(sourceFileName, destinationFileName);
-            System.out.println("Random lines copied successfully.");
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static void main(String[] args) throws IOException, InterruptedException {
+        String sourceFile = "source.txt";  // Replace with your source file path
+        String destinationFile = "destination.txt";  // Replace with your destination file path
+        
+        Random random = new Random();
+        List<String> lines = readLinesFromFile(sourceFile);
+        
+        while (true) {
+            String randomLine = lines.get(random.nextInt(lines.size()));
+            writeLineToFile(destinationFile, randomLine);
+            System.out.println("Copied line: " + randomLine);
+            
+            Thread.sleep(5000);  // Sleep for 5 seconds
         }
     }
 
-    public static void copyRandomLineByLine(String sourceFileName, String destinationFileName) throws IOException {
+    private static List<String> readLinesFromFile(String fileName) throws IOException {
         List<String> lines = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(sourceFileName))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 lines.add(line);
             }
         }
+        return lines;
+    }
 
-        // Shuffle the lines to achieve randomness
-        Collections.shuffle(lines);
-        
-        // Write each line to the destination file
-        try (FileWriter writer = new FileWriter(destinationFileName)) {
-            for (String line : lines) {
-                writer.write(line + "\n");
-            }
+    private static void writeLineToFile(String fileName, String line) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true))) {
+            writer.write(line);
+            writer.newLine();
         }
     }
 }
