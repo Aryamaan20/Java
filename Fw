@@ -1,0 +1,48 @@
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class CopyRandomLineFromFile {
+
+    public static void main(String[] args) {
+        String sourceFileName = "path/to/source/file.txt";       // Path to your source file
+        String destinationFileName = "path/to/destination/file.txt"; // Path to your destination file
+
+        try {
+            copyRandomLineByLine(sourceFileName, destinationFileName);
+            System.out.println("Random lines copied successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void copyRandomLineByLine(String sourceFileName, String destinationFileName) throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(sourceFileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+        }
+
+        // Shuffle the lines to achieve randomness
+        Random rand = new Random();
+        for (int i = 0; i < lines.size(); i++) {
+            int randomIndex = rand.nextInt(lines.size());
+            String randomLine = lines.get(randomIndex);
+
+            // Write the random line to the destination file
+            try (FileWriter writer = new FileWriter(destinationFileName, true)) {
+                writer.write(randomLine + "\n");
+            }
+
+            // Remove the selected line to prevent duplicates
+            lines.remove(randomIndex);
+        }
+    }
+}
